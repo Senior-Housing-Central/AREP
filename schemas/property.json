@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arep.dev/schemas/property.json",
+  "title": "AREP Property",
+  "description": "Unified property schema supporting both rental and sale listings",
+  "type": "object",
+  "required": ["property_id", "transaction_type", "property_type", "status", "address"],
+  "properties": {
+    "property_id": {
+      "type": "string",
+      "pattern": "^arep:[a-z0-9-]+$",
+      "description": "Universal Property ID (e.g., arep:zillow-123456)"
+    },
+    "transaction_type": {
+      "type": "string",
+      "enum": ["for_rent", "for_sale"],
+      "description": "Rental or sale listing"
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "single_family",
+        "condo",
+        "townhouse",
+        "multi_family",
+        "apartment",
+        "manufactured",
+        "land",
+        "commercial"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "contingent",
+        "sold",
+        "leased",
+        "off_market",
+        "coming_soon"
+      ]
+    },
+    "address": {
+      "$ref": "#/$defs/address"
+    },
+    "pricing": {
+      "type": "object",
+      "properties": {
+        "list_price": {
+          "type": "number",
+          "description": "Sale price or monthly rent"
+        },
+        "price_per_sqft": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD"
+        },
+        "deposit": {
+          "type": "number",
+          "description": "Security deposit (rentals)"
+        },
+        "hoa_fee": {
+          "type": "number",
+          "description": "Monthly HOA fee"
+        },
+        "tax_annual": {
+          "type": "number",
+          "description": "Annual property tax"
+        }
+      }
+    },
+    "details": {
+      "type": "object",
+      "properties": {
+        "bedrooms": { "type": "integer" },
+        "bathrooms": { "type": "number" },
+        "sqft": { "type": "integer" },
+        "lot_sqft": { "type": "integer" },
+        "year_built": { "type": "integer" },
+        "stories": { "type": "integer" },
+        "garage_spaces": { "type": "integer" },
+        "parking_type": {
+          "type": "string",
+          "enum": ["none", "street", "driveway", "carport", "garage", "covered"]
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Property features and amenities"
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["photo", "video", "virtual_tour", "floor_plan", "3d_model"]
+          },
+          "url": { "type": "string", "format": "uri" },
+          "caption": { "type": "string" }
+        }
+      }
+    },
+    "availability": {
+      "type": "object",
+      "description": "Rental availability details",
+      "properties": {
+        "available_date": { "type": "string", "format": "date" },
+        "lease_terms": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Available lease terms in months"
+        },
+        "pets_allowed": { "type": "boolean" },
+        "pet_deposit": { "type": "number" }
+      }
+    },
+    "sale_details": {
+      "type": "object",
+      "description": "Sale-specific details",
+      "properties": {
+        "days_on_market": { "type": "integer" },
+        "original_list_price": { "type": "number" },
+        "price_change_date": { "type": "string", "format": "date" },
+        "open_house": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "format": "date" },
+              "start_time": { "type": "string" },
+              "end_time": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "listing_agent": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "brokerage": { "type": "string" },
+        "license_number": { "type": "string" }
+      }
+    },
+    "mls": {
+      "type": "object",
+      "description": "MLS metadata",
+      "properties": {
+        "mls_id": { "type": "string" },
+        "mls_name": { "type": "string" },
+        "listing_id": { "type": "string" }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "properties": {
+        "listed_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "sold_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "$defs": {
+    "address": {
+      "type": "object",
+      "required": ["street", "city", "state", "postal_code"],
+      "properties": {
+        "street": { "type": "string" },
+        "unit": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "postal_code": { "type": "string" },
+        "county": { "type": "string" },
+        "country": { "type": "string", "default": "US" },
+        "coordinates": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

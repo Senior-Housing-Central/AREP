@@ -1,0 +1,1598 @@
+openapi: 3.0.3
+info:
+  title: AI Real Estate Protocol (AREP)
+  description: |
+    AREP is an open standard enabling AI agents to discover properties, get valuations, 
+    submit applications or offers, and complete real estate transactions.
+    
+    AREP supports both **rental** and **sale** transactions through a unified protocol.
+  version: 1.0.0-draft
+  contact:
+    name: AREP Specification
+    email: spec@arep.dev
+    url: https://arep.dev
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://api.example.com/arep/v1
+    description: Example AREP Provider
+
+tags:
+  - name: Discovery
+    description: Property search and discovery
+  - name: Pricing
+    description: Valuations, estimates, and market data
+  - name: Offers
+    description: Rental applications and purchase offers
+  - name: Transaction
+    description: Leases and contracts
+
+paths:
+  /.well-known/arep:
+    get:
+      operationId: getManifest
+      summary: Get AREP Discovery Manifest
+      description: Returns the provider's AREP manifest with capabilities and transports
+      tags:
+        - Discovery
+      responses:
+        '200':
+          description: AREP manifest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+
+  /properties:
+    get:
+      operationId: searchProperties
+      summary: Search Properties
+      description: Search for properties matching the given criteria
+      tags:
+        - Discovery
+      parameters:
+        - name: transaction_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [for_sale, for_rent]
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: postal_code
+          in: query
+          schema:
+            type: string
+        - name: lat
+          in: query
+          schema:
+            type: number
+          description: Latitude for radius search
+        - name: lng
+          in: query
+          schema:
+            type: number
+          description: Longitude for radius search
+        - name: radius_miles
+          in: query
+          schema:
+            type: number
+            default: 10
+        - name: price_min
+          in: query
+          schema:
+            type: number
+        - name: price_max
+          in: query
+          schema:
+            type: number
+        - name: bedrooms_min
+          in: query
+          schema:
+            type: integer
+        - name: bathrooms_min
+          in: query
+          schema:
+            type: number
+        - name: sqft_min
+          in: query
+          schema:
+            type: integer
+        - name: sqft_max
+          in: query
+          schema:
+            type: integer
+        - name: year_built_min
+          in: query
+          schema:
+            type: integer
+        - name: property_types
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [single_family, condo, townhouse, multi_family, apartment, land]
+        - name: features
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [active, pending, contingent, coming_soon]
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, newest, sqft, days_on_market]
+            default: newest
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertySearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /properties/{property_id}:
+    get:
+      operationId: getProperty
+      summary: Get Property Details
+      description: Get detailed information about a specific property
+      tags:
+        - Discovery
+      parameters:
+        - name: property_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: arep:zillow-123456
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [estimate, history, comparables, schools, walkability]
+      responses:
+        '200':
+          description: Property details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /properties/{property_id}/similar:
+    get:
+      operationId: getSimilarProperties
+      summary: Find Similar Properties
+      description: Find properties similar to the specified property
+      tags:
+        - Discovery
+      parameters:
+        - name: property_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Similar properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertySearchResponse'
+
+  /properties/{property_id}/history:
+    get:
+      operationId: getPropertyHistory
+      summary: Get Property History
+      description: Get price history and transaction history for a property
+      tags:
+        - Discovery
+      parameters:
+        - name: property_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Property history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyHistory'
+
+  /estimate/{property_id}:
+    get:
+      operationId: getEstimate
+      summary: Get Property Estimate
+      description: Get value and rent estimates for a property
+      tags:
+        - Pricing
+      parameters:
+        - name: property_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: estimate_type
+          in: query
+          schema:
+            type: string
+            enum: [sale, rent, both]
+            default: both
+      responses:
+        '200':
+          description: Property estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+
+  /comparables/{property_id}:
+    get:
+      operationId: getComparables
+      summary: Get Comparable Properties
+      description: Get comparable sales or rentals for valuation
+      tags:
+        - Pricing
+      parameters:
+        - name: property_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: transaction_type
+          in: query
+          schema:
+            type: string
+            enum: [sold, for_sale, rented, for_rent]
+            default: sold
+        - name: radius_miles
+          in: query
+          schema:
+            type: number
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 180
+          description: Days back to search for sold/rented comps
+      responses:
+        '200':
+          description: Comparable properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComparablesResponse'
+
+  /market/{location}:
+    get:
+      operationId: getMarketTrends
+      summary: Get Market Trends
+      description: Get real estate market statistics for an area
+      tags:
+        - Pricing
+      parameters:
+        - name: location
+          in: path
+          required: true
+          schema:
+            type: string
+          description: City, postal code, or county
+          example: "Austin,TX"
+        - name: transaction_type
+          in: query
+          schema:
+            type: string
+            enum: [for_sale, for_rent]
+            default: for_sale
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [1_month, 3_months, 6_months, 12_months, 5_years]
+            default: 12_months
+        - name: property_type
+          in: query
+          schema:
+            type: string
+            enum: [all, single_family, condo, townhouse]
+            default: all
+      responses:
+        '200':
+          description: Market trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketTrends'
+
+  /affordability:
+    post:
+      operationId: calculateAffordability
+      summary: Calculate Affordability
+      description: Calculate how much home a buyer can afford
+      tags:
+        - Pricing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffordabilityRequest'
+      responses:
+        '200':
+          description: Affordability calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffordabilityResponse'
+
+  /applications:
+    post:
+      operationId: createApplication
+      summary: Create Rental Application
+      description: Create a new rental application
+      tags:
+        - Offers
+      security:
+        - oauth2: [application:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalApplication'
+      responses:
+        '201':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalApplication'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /applications/{application_id}:
+    get:
+      operationId: getApplication
+      summary: Get Application
+      description: Get rental application by ID
+      tags:
+        - Offers
+      security:
+        - oauth2: [application:read]
+      parameters:
+        - name: application_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalApplication'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: updateApplication
+      summary: Update Application
+      description: Update rental application
+      tags:
+        - Offers
+      security:
+        - oauth2: [application:write]
+      parameters:
+        - name: application_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalApplication'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalApplication'
+
+  /applications/{application_id}/submit:
+    post:
+      operationId: submitApplication
+      summary: Submit Application
+      description: Submit rental application for review
+      tags:
+        - Offers
+      security:
+        - oauth2: [application:write]
+      parameters:
+        - name: application_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalApplication'
+
+  /offers:
+    post:
+      operationId: createOffer
+      summary: Create Purchase Offer
+      description: Create a new purchase offer
+      tags:
+        - Offers
+      security:
+        - oauth2: [offer:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOffer'
+      responses:
+        '201':
+          description: Offer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOffer'
+
+  /offers/{offer_id}:
+    get:
+      operationId: getOffer
+      summary: Get Offer
+      description: Get purchase offer by ID
+      tags:
+        - Offers
+      security:
+        - oauth2: [offer:read]
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Offer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOffer'
+
+    put:
+      operationId: updateOffer
+      summary: Update Offer
+      description: Update purchase offer
+      tags:
+        - Offers
+      security:
+        - oauth2: [offer:write]
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOffer'
+      responses:
+        '200':
+          description: Offer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOffer'
+
+  /offers/{offer_id}/submit:
+    post:
+      operationId: submitOffer
+      summary: Submit Offer
+      description: Submit purchase offer to seller
+      tags:
+        - Offers
+      security:
+        - oauth2: [offer:write]
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Offer submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOffer'
+
+  /leases:
+    post:
+      operationId: createLease
+      summary: Create Lease
+      description: Generate lease from approved application
+      tags:
+        - Transaction
+      security:
+        - oauth2: [transaction:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseRequest'
+      responses:
+        '201':
+          description: Lease created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+
+  /contracts:
+    post:
+      operationId: createContract
+      summary: Create Purchase Contract
+      description: Generate purchase contract from accepted offer
+      tags:
+        - Transaction
+      security:
+        - oauth2: [transaction:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractRequest'
+      responses:
+        '201':
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+
+  /documents/{transaction_id}:
+    get:
+      operationId: getDocuments
+      summary: Get Transaction Documents
+      description: Get documents for a transaction
+      tags:
+        - Transaction
+      security:
+        - oauth2: [transaction:read]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentList'
+
+  /sign/{document_id}:
+    post:
+      operationId: signDocument
+      summary: Sign Document
+      description: E-sign a document
+      tags:
+        - Transaction
+      security:
+        - oauth2: [transaction:sign]
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignatureRequest'
+      responses:
+        '200':
+          description: Document signed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignatureResponse'
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes:
+            property:read: Search and view properties
+            property:write: Create/update listings
+            estimate:read: Get valuations and comps
+            application:read: View applications
+            application:write: Create/submit applications
+            offer:read: View purchase offers
+            offer:write: Create/submit offers
+            transaction:read: View documents
+            transaction:write: Create transactions
+            transaction:sign: Sign documents
+        authorizationCode:
+          authorizationUrl: /oauth/authorize
+          tokenUrl: /oauth/token
+          scopes:
+            property:read: Search and view properties
+            application:write: Create/submit applications
+            offer:write: Create/submit offers
+            transaction:sign: Sign documents
+
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Manifest:
+      type: object
+      required:
+        - arep
+      properties:
+        arep:
+          type: object
+          required:
+            - version
+            - provider
+            - capabilities
+          properties:
+            version:
+              type: string
+              example: "2026-01"
+            provider:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [marketplace, mls, property_manager, brokerage, aggregator]
+                transaction_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [rental, sale]
+                regions:
+                  type: array
+                  items:
+                    type: string
+            capabilities:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  version:
+                    type: string
+            extensions:
+              type: object
+              additionalProperties:
+                type: object
+            transports:
+              type: object
+              properties:
+                rest:
+                  type: object
+                  properties:
+                    endpoint:
+                      type: string
+                      format: uri
+                mcp:
+                  type: object
+                  properties:
+                    endpoint:
+                      type: string
+                      format: uri
+                a2a:
+                  type: object
+                  properties:
+                    agent_card:
+                      type: string
+                      format: uri
+
+    Property:
+      type: object
+      required:
+        - property_id
+        - transaction_type
+        - property_type
+        - status
+        - address
+      properties:
+        property_id:
+          type: string
+          pattern: ^arep:[a-z0-9-]+$
+        transaction_type:
+          type: string
+          enum: [for_rent, for_sale]
+        property_type:
+          type: string
+          enum: [single_family, condo, townhouse, multi_family, apartment, manufactured, land, commercial]
+        status:
+          type: string
+          enum: [active, pending, contingent, sold, leased, off_market, coming_soon]
+        address:
+          $ref: '#/components/schemas/Address'
+        pricing:
+          $ref: '#/components/schemas/Pricing'
+        details:
+          $ref: '#/components/schemas/PropertyDetails'
+        features:
+          type: array
+          items:
+            type: string
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        availability:
+          $ref: '#/components/schemas/Availability'
+        sale_details:
+          $ref: '#/components/schemas/SaleDetails'
+        listing_agent:
+          $ref: '#/components/schemas/Agent'
+        mls:
+          $ref: '#/components/schemas/MLSInfo'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+
+    PropertySearchResponse:
+      type: object
+      properties:
+        total_results:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Property'
+
+    PropertyHistory:
+      type: object
+      properties:
+        property_id:
+          type: string
+        price_history:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              event:
+                type: string
+                enum: [listed, price_change, pending, sold, withdrawn, relisted]
+              price:
+                type: number
+        tax_history:
+          type: array
+          items:
+            type: object
+            properties:
+              year:
+                type: integer
+              assessed_value:
+                type: number
+              tax_amount:
+                type: number
+
+    Estimate:
+      type: object
+      properties:
+        property_id:
+          type: string
+        estimate:
+          type: object
+          properties:
+            value:
+              type: number
+            value_low:
+              type: number
+            value_high:
+              type: number
+            confidence:
+              type: string
+              enum: [low, medium, high]
+            as_of:
+              type: string
+              format: date
+        rent_estimate:
+          type: object
+          properties:
+            monthly:
+              type: number
+            monthly_low:
+              type: number
+            monthly_high:
+              type: number
+        value_history:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              value:
+                type: number
+        forecast:
+          type: object
+          properties:
+            one_year:
+              type: object
+              properties:
+                change_percent:
+                  type: number
+                value:
+                  type: number
+
+    ComparablesResponse:
+      type: object
+      properties:
+        subject_property:
+          type: object
+          properties:
+            property_id:
+              type: string
+            list_price:
+              type: number
+            sqft:
+              type: integer
+            price_per_sqft:
+              type: number
+        comparables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comparable'
+        market_summary:
+          type: object
+          properties:
+            median_sold_price:
+              type: number
+            median_price_per_sqft:
+              type: number
+            avg_days_on_market:
+              type: integer
+
+    Comparable:
+      type: object
+      properties:
+        property_id:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        sold_price:
+          type: number
+        sold_date:
+          type: string
+          format: date
+        sqft:
+          type: integer
+        price_per_sqft:
+          type: number
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: number
+        distance_miles:
+          type: number
+        similarity_score:
+          type: number
+
+    MarketTrends:
+      type: object
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+        period:
+          type: string
+        sale_market:
+          type: object
+          properties:
+            median_list_price:
+              type: number
+            median_sold_price:
+              type: number
+            median_price_per_sqft:
+              type: number
+            inventory:
+              type: integer
+            new_listings:
+              type: integer
+            sold_count:
+              type: integer
+            median_days_on_market:
+              type: integer
+            sale_to_list_ratio:
+              type: number
+            price_change_yoy:
+              type: number
+        rental_market:
+          type: object
+          properties:
+            median_rent:
+              type: number
+            rent_change_yoy:
+              type: number
+            vacancy_rate:
+              type: number
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              median_price:
+                type: number
+
+    AffordabilityRequest:
+      type: object
+      required:
+        - annual_income
+      properties:
+        annual_income:
+          type: number
+        monthly_debts:
+          type: number
+          default: 0
+        down_payment:
+          type: number
+        down_payment_percent:
+          type: number
+        interest_rate:
+          type: number
+        loan_term_years:
+          type: integer
+          default: 30
+        location:
+          $ref: '#/components/schemas/Location'
+        include_taxes:
+          type: boolean
+          default: true
+        include_insurance:
+          type: boolean
+          default: true
+
+    AffordabilityResponse:
+      type: object
+      properties:
+        max_purchase_price:
+          type: number
+        comfortable_price:
+          type: number
+        monthly_payment:
+          type: object
+          properties:
+            principal_interest:
+              type: number
+            property_tax:
+              type: number
+            insurance:
+              type: number
+            hoa:
+              type: number
+            total:
+              type: number
+        debt_to_income:
+          type: number
+        down_payment_percent:
+          type: number
+        loan_amount:
+          type: number
+
+    RentalApplication:
+      type: object
+      required:
+        - property_id
+        - applicant
+      properties:
+        application_id:
+          type: string
+        property_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, under_review, approved, conditionally_approved, denied, withdrawn, expired]
+        applicant:
+          $ref: '#/components/schemas/Applicant'
+        employment:
+          $ref: '#/components/schemas/Employment'
+        rental_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/RentalHistoryItem'
+        desired_move_in:
+          type: string
+          format: date
+        desired_lease_term:
+          type: integer
+        consents:
+          type: object
+          properties:
+            background_check:
+              type: boolean
+            credit_check:
+              type: boolean
+
+    PurchaseOffer:
+      type: object
+      required:
+        - property_id
+        - buyer
+        - offer_price
+      properties:
+        offer_id:
+          type: string
+        property_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, under_review, accepted, countered, rejected, withdrawn, expired, under_contract, closed]
+        buyer:
+          $ref: '#/components/schemas/Buyer'
+        offer_price:
+          type: number
+        earnest_money:
+          type: number
+        down_payment_percent:
+          type: number
+        financing:
+          $ref: '#/components/schemas/Financing'
+        contingencies:
+          $ref: '#/components/schemas/Contingencies'
+        closing_date:
+          type: string
+          format: date
+        possession_date:
+          type: string
+          format: date
+        inclusions:
+          type: array
+          items:
+            type: string
+        exclusions:
+          type: array
+          items:
+            type: string
+        additional_terms:
+          type: string
+        expiration:
+          type: string
+          format: date-time
+
+    LeaseRequest:
+      type: object
+      required:
+        - application_id
+      properties:
+        application_id:
+          type: string
+        lease_start_date:
+          type: string
+          format: date
+        lease_term_months:
+          type: integer
+
+    Lease:
+      type: object
+      properties:
+        lease_id:
+          type: string
+        application_id:
+          type: string
+        property_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending_signature, active, expired, terminated]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        monthly_rent:
+          type: number
+        deposit:
+          type: number
+        document_url:
+          type: string
+          format: uri
+
+    ContractRequest:
+      type: object
+      required:
+        - offer_id
+      properties:
+        offer_id:
+          type: string
+
+    Contract:
+      type: object
+      properties:
+        contract_id:
+          type: string
+        offer_id:
+          type: string
+        property_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending_signatures, under_contract, closed, cancelled]
+        purchase_price:
+          type: number
+        closing_date:
+          type: string
+          format: date
+        document_url:
+          type: string
+          format: uri
+
+    DocumentList:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              document_id:
+                type: string
+              type:
+                type: string
+              filename:
+                type: string
+              url:
+                type: string
+                format: uri
+              status:
+                type: string
+                enum: [pending, signed, voided]
+              created_at:
+                type: string
+                format: date-time
+
+    SignatureRequest:
+      type: object
+      required:
+        - signature_data
+      properties:
+        signature_data:
+          type: string
+          description: Base64-encoded signature or signature token
+
+    SignatureResponse:
+      type: object
+      properties:
+        document_id:
+          type: string
+        signed_at:
+          type: string
+          format: date-time
+        signer:
+          type: string
+
+    Address:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - postal_code
+      properties:
+        street:
+          type: string
+        unit:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postal_code:
+          type: string
+        county:
+          type: string
+        country:
+          type: string
+          default: US
+        coordinates:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    Location:
+      type: object
+      properties:
+        city:
+          type: string
+        state:
+          type: string
+        postal_code:
+          type: string
+        county:
+          type: string
+
+    Pricing:
+      type: object
+      properties:
+        list_price:
+          type: number
+        price_per_sqft:
+          type: number
+        currency:
+          type: string
+          default: USD
+        deposit:
+          type: number
+        hoa_fee:
+          type: number
+        tax_annual:
+          type: number
+
+    PropertyDetails:
+      type: object
+      properties:
+        bedrooms:
+          type: integer
+        bathrooms:
+          type: number
+        sqft:
+          type: integer
+        lot_sqft:
+          type: integer
+        year_built:
+          type: integer
+        stories:
+          type: integer
+        garage_spaces:
+          type: integer
+        parking_type:
+          type: string
+          enum: [none, street, driveway, carport, garage, covered]
+
+    Media:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [photo, video, virtual_tour, floor_plan, 3d_model]
+        url:
+          type: string
+          format: uri
+        caption:
+          type: string
+
+    Availability:
+      type: object
+      properties:
+        available_date:
+          type: string
+          format: date
+        lease_terms:
+          type: array
+          items:
+            type: integer
+        pets_allowed:
+          type: boolean
+        pet_deposit:
+          type: number
+
+    SaleDetails:
+      type: object
+      properties:
+        days_on_market:
+          type: integer
+        original_list_price:
+          type: number
+        price_change_date:
+          type: string
+          format: date
+        open_house:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              start_time:
+                type: string
+              end_time:
+                type: string
+
+    Agent:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        brokerage:
+          type: string
+        license_number:
+          type: string
+
+    MLSInfo:
+      type: object
+      properties:
+        mls_id:
+          type: string
+        mls_name:
+          type: string
+        listing_id:
+          type: string
+
+    Timestamps:
+      type: object
+      properties:
+        listed_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        sold_at:
+          type: string
+          format: date-time
+
+    Applicant:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: object
+          properties:
+            first:
+              type: string
+            middle:
+              type: string
+            last:
+              type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        current_address:
+          $ref: '#/components/schemas/Address'
+
+    Employment:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [employed, self_employed, unemployed, retired, student]
+        employer:
+          type: string
+        position:
+          type: string
+        monthly_income:
+          type: number
+        start_date:
+          type: string
+          format: date
+
+    RentalHistoryItem:
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+        landlord_name:
+          type: string
+        landlord_phone:
+          type: string
+        monthly_rent:
+          type: number
+        dates:
+          type: object
+          properties:
+            from:
+              type: string
+            to:
+              type: string
+        reason_for_leaving:
+          type: string
+
+    Buyer:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        agent:
+          $ref: '#/components/schemas/Agent'
+
+    Financing:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [cash, conventional, fha, va, usda, jumbo, other]
+        pre_approved:
+          type: boolean
+        lender:
+          type: string
+        pre_approval_amount:
+          type: number
+        pre_approval_expiration:
+          type: string
+          format: date
+
+    Contingencies:
+      type: object
+      properties:
+        inspection:
+          type: object
+          properties:
+            included:
+              type: boolean
+            days:
+              type: integer
+        appraisal:
+          type: object
+          properties:
+            included:
+              type: boolean
+        financing:
+          type: object
+          properties:
+            included:
+              type: boolean
+            days:
+              type: integer
+        sale_of_home:
+          type: object
+          properties:
+            included:
+              type: boolean
+            property_address:
+              type: string
+            days:
+              type: integer
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum: [INVALID_REQUEST, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, VALIDATION_ERROR, RATE_LIMITED]
+        message:
+          type: string
+        details:
+          type: object

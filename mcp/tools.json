@@ -1,0 +1,382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "arep",
+  "description": "AI Real Estate Protocol (AREP) MCP Tools",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "search_properties",
+      "description": "Search real estate listings for sale or rent. Returns properties matching the given criteria including location, price range, bedrooms, and features.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["transaction_type", "location"],
+        "properties": {
+          "transaction_type": {
+            "type": "string",
+            "enum": ["for_sale", "for_rent"],
+            "description": "Search for properties to buy or rent"
+          },
+          "location": {
+            "type": "object",
+            "description": "Search location",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "City name"
+              },
+              "state": {
+                "type": "string",
+                "description": "State abbreviation (e.g., TX, CA)"
+              },
+              "postal_code": {
+                "type": "string",
+                "description": "ZIP/postal code"
+              },
+              "coordinates": {
+                "type": "object",
+                "description": "Coordinate-based search",
+                "properties": {
+                  "lat": {
+                    "type": "number",
+                    "description": "Latitude"
+                  },
+                  "lng": {
+                    "type": "number",
+                    "description": "Longitude"
+                  },
+                  "radius_miles": {
+                    "type": "number",
+                    "description": "Search radius in miles",
+                    "default": 10
+                  }
+                }
+              }
+            }
+          },
+          "price_min": {
+            "type": "number",
+            "description": "Minimum price (sale price or monthly rent)"
+          },
+          "price_max": {
+            "type": "number",
+            "description": "Maximum price (sale price or monthly rent)"
+          },
+          "bedrooms_min": {
+            "type": "integer",
+            "description": "Minimum number of bedrooms"
+          },
+          "bathrooms_min": {
+            "type": "number",
+            "description": "Minimum number of bathrooms"
+          },
+          "sqft_min": {
+            "type": "integer",
+            "description": "Minimum square footage"
+          },
+          "sqft_max": {
+            "type": "integer",
+            "description": "Maximum square footage"
+          },
+          "year_built_min": {
+            "type": "integer",
+            "description": "Minimum year built"
+          },
+          "property_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["single_family", "condo", "townhouse", "multi_family", "apartment", "land"]
+            },
+            "description": "Property types to include"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Required features (e.g., pool, garage, central_air)"
+          },
+          "status": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["active", "pending", "contingent", "coming_soon"]
+            },
+            "description": "Listing statuses to include"
+          },
+          "sort_by": {
+            "type": "string",
+            "enum": ["price_asc", "price_desc", "newest", "sqft", "days_on_market"],
+            "description": "Sort order for results"
+          },
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "description": "Page number"
+          },
+          "page_size": {
+            "type": "integer",
+            "default": 20,
+            "description": "Results per page (max 100)"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_property_details",
+      "description": "Get detailed information about a specific property including all details, photos, and optional additional data like estimates, history, and comparables.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["property_id"],
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "AREP property ID (e.g., arep:zillow-123456)"
+          },
+          "include": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["estimate", "history", "comparables", "schools", "walkability"]
+            },
+            "description": "Additional data to include in the response"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_estimate",
+      "description": "Get property value or rent estimate for a property. Returns estimated value range, rent estimate, historical values, and forecasts.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["property_id"],
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "AREP property ID or full address"
+          },
+          "estimate_type": {
+            "type": "string",
+            "enum": ["sale", "rent", "both"],
+            "default": "both",
+            "description": "Type of estimate to return"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_comparables",
+      "description": "Get comparable properties (comps) for valuation. Returns similar properties that have sold or are for sale nearby, with similarity scores.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["property_id"],
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "AREP property ID"
+          },
+          "transaction_type": {
+            "type": "string",
+            "enum": ["sold", "for_sale", "rented", "for_rent"],
+            "description": "Type of comparables to find"
+          },
+          "radius_miles": {
+            "type": "number",
+            "default": 1,
+            "description": "Search radius in miles"
+          },
+          "limit": {
+            "type": "integer",
+            "default": 10,
+            "description": "Maximum number of comparables to return"
+          },
+          "days": {
+            "type": "integer",
+            "default": 180,
+            "description": "Days back to search for sold/rented comps"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_market_trends",
+      "description": "Get real estate market statistics for an area including median prices, inventory levels, days on market, and price trends over time.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["location"],
+        "properties": {
+          "location": {
+            "type": "object",
+            "description": "Market location",
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "postal_code": {
+                "type": "string"
+              },
+              "county": {
+                "type": "string"
+              }
+            }
+          },
+          "period": {
+            "type": "string",
+            "enum": ["1_month", "3_months", "6_months", "12_months", "5_years"],
+            "default": "12_months",
+            "description": "Time period for trends"
+          },
+          "property_type": {
+            "type": "string",
+            "enum": ["all", "single_family", "condo", "townhouse"],
+            "default": "all",
+            "description": "Property type to analyze"
+          }
+        }
+      }
+    },
+    {
+      "name": "calculate_affordability",
+      "description": "Calculate how much home a buyer can afford based on income, debts, and down payment. Returns maximum purchase price, comfortable price, and monthly payment breakdown.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["annual_income"],
+        "properties": {
+          "annual_income": {
+            "type": "number",
+            "description": "Gross annual income"
+          },
+          "monthly_debts": {
+            "type": "number",
+            "default": 0,
+            "description": "Monthly debt payments (car, student loans, etc.)"
+          },
+          "down_payment": {
+            "type": "number",
+            "description": "Down payment amount in dollars"
+          },
+          "down_payment_percent": {
+            "type": "number",
+            "description": "Down payment as percentage (alternative to amount)"
+          },
+          "interest_rate": {
+            "type": "number",
+            "description": "Mortgage interest rate (e.g., 6.5 for 6.5%)"
+          },
+          "loan_term_years": {
+            "type": "integer",
+            "default": 30,
+            "description": "Loan term in years (15 or 30)"
+          },
+          "location": {
+            "type": "object",
+            "description": "Location for tax/insurance estimates",
+            "properties": {
+              "state": {
+                "type": "string"
+              },
+              "postal_code": {
+                "type": "string"
+              }
+            }
+          },
+          "include_taxes": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include property taxes in calculation"
+          },
+          "include_insurance": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include homeowners insurance in calculation"
+          }
+        }
+      }
+    },
+    {
+      "name": "create_offer",
+      "description": "Create a rental application or purchase offer for a property. Returns the created offer/application with ID for tracking.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["property_id", "offer_type"],
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "AREP property ID"
+          },
+          "offer_type": {
+            "type": "string",
+            "enum": ["rental_application", "purchase_offer"],
+            "description": "Type of offer to create"
+          },
+          "applicant": {
+            "type": "object",
+            "description": "Applicant/buyer information",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Full name"
+              },
+              "email": {
+                "type": "string",
+                "description": "Email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number"
+              }
+            }
+          },
+          "offer_price": {
+            "type": "number",
+            "description": "Purchase offer price (sales only)"
+          },
+          "move_in_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Desired move-in date (rentals)"
+          },
+          "closing_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Proposed closing date (sales)"
+          },
+          "financing_type": {
+            "type": "string",
+            "enum": ["cash", "conventional", "fha", "va"],
+            "description": "Financing type (sales only)"
+          },
+          "earnest_money": {
+            "type": "number",
+            "description": "Earnest money deposit (sales only)"
+          },
+          "contingencies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["inspection", "appraisal", "financing", "sale_of_home"]
+            },
+            "description": "Contingencies to include (sales only)"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_offer_status",
+      "description": "Check status of a rental application or purchase offer. Returns current status, any counter-offers, and next steps.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["offer_id"],
+        "properties": {
+          "offer_id": {
+            "type": "string",
+            "description": "AREP offer/application ID"
+          }
+        }
+      }
+    }
+  ]
+}

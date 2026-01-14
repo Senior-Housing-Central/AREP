@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arep.dev/schemas/application.json",
+  "title": "AREP Rental Application",
+  "description": "Schema for rental applications",
+  "type": "object",
+  "required": ["type", "application_id", "property_id", "status", "applicant"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "rental_application"
+    },
+    "application_id": {
+      "type": "string",
+      "pattern": "^arep:app:[a-z0-9-]+$",
+      "description": "Unique application ID"
+    },
+    "property_id": {
+      "type": "string",
+      "pattern": "^arep:[a-z0-9-]+$",
+      "description": "Property being applied for"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "under_review",
+        "approved",
+        "conditionally_approved",
+        "denied",
+        "withdrawn",
+        "expired"
+      ]
+    },
+    "applicant": {
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name": {
+          "type": "object",
+          "required": ["first", "last"],
+          "properties": {
+            "first": { "type": "string" },
+            "middle": { "type": "string" },
+            "last": { "type": "string" }
+          }
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "date_of_birth": {
+          "type": "string",
+          "format": "date"
+        },
+        "ssn_last_four": {
+          "type": "string",
+          "pattern": "^\\d{4}$"
+        },
+        "current_address": {
+          "$ref": "#/$defs/address"
+        }
+      }
+    },
+    "co_applicants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/properties/applicant"
+      }
+    },
+    "employment": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["employed", "self_employed", "unemployed", "retired", "student"]
+        },
+        "employer": { "type": "string" },
+        "position": { "type": "string" },
+        "monthly_income": { "type": "number" },
+        "start_date": { "type": "string", "format": "date" },
+        "supervisor_name": { "type": "string" },
+        "supervisor_phone": { "type": "string" }
+      }
+    },
+    "income": {
+      "type": "object",
+      "properties": {
+        "monthly_gross": { "type": "number" },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["employment", "self_employment", "social_security", "pension", "disability", "alimony", "child_support", "investments", "other"]
+              },
+              "amount": { "type": "number" },
+              "frequency": {
+                "type": "string",
+                "enum": ["weekly", "biweekly", "monthly", "annually"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "rental_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "address": { "$ref": "#/$defs/address" },
+          "landlord_name": { "type": "string" },
+          "landlord_phone": { "type": "string" },
+          "landlord_email": { "type": "string", "format": "email" },
+          "monthly_rent": { "type": "number" },
+          "dates": {
+            "type": "object",
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" }
+            }
+          },
+          "reason_for_leaving": { "type": "string" }
+        }
+      }
+    },
+    "pets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "breed": { "type": "string" },
+          "weight": { "type": "number" },
+          "name": { "type": "string" }
+        }
+      }
+    },
+    "vehicles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "make": { "type": "string" },
+          "model": { "type": "string" },
+          "year": { "type": "integer" },
+          "color": { "type": "string" },
+          "license_plate": { "type": "string" },
+          "state": { "type": "string" }
+        }
+      }
+    },
+    "emergency_contact": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "relationship": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "desired_move_in": {
+      "type": "string",
+      "format": "date"
+    },
+    "desired_lease_term": {
+      "type": "integer",
+      "description": "Desired lease term in months"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["id", "proof_of_income", "bank_statement", "tax_return", "employment_letter", "other"]
+          },
+          "filename": { "type": "string" },
+          "uploaded_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "consents": {
+      "type": "object",
+      "properties": {
+        "background_check": { "type": "boolean" },
+        "credit_check": { "type": "boolean" },
+        "terms_accepted": { "type": "boolean" },
+        "consent_timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "properties": {
+        "created_at": { "type": "string", "format": "date-time" },
+        "submitted_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "$defs": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string" },
+        "unit": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "postal_code": { "type": "string" },
+        "country": { "type": "string", "default": "US" }
+      }
+    }
+  }
+}

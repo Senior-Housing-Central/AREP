@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arep.dev/schemas/offer.json",
+  "title": "AREP Purchase Offer",
+  "description": "Schema for purchase offers",
+  "type": "object",
+  "required": ["type", "offer_id", "property_id", "status", "buyer", "offer_price"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "purchase_offer"
+    },
+    "offer_id": {
+      "type": "string",
+      "pattern": "^arep:offer:[a-z0-9-]+$",
+      "description": "Unique offer ID"
+    },
+    "property_id": {
+      "type": "string",
+      "pattern": "^arep:[a-z0-9-]+$",
+      "description": "Property being offered on"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "under_review",
+        "accepted",
+        "countered",
+        "rejected",
+        "withdrawn",
+        "expired",
+        "under_contract",
+        "closed"
+      ]
+    },
+    "buyer": {
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "agent": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "brokerage": { "type": "string" },
+            "license": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "phone": { "type": "string" }
+          }
+        }
+      }
+    },
+    "offer_price": {
+      "type": "number",
+      "description": "Offered purchase price"
+    },
+    "earnest_money": {
+      "type": "number",
+      "description": "Earnest money deposit amount"
+    },
+    "down_payment_percent": {
+      "type": "number",
+      "description": "Down payment as percentage of purchase price"
+    },
+    "financing": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["cash", "conventional", "fha", "va", "usda", "jumbo", "other"]
+        },
+        "pre_approved": { "type": "boolean" },
+        "lender": { "type": "string" },
+        "pre_approval_amount": { "type": "number" },
+        "pre_approval_expiration": { "type": "string", "format": "date" }
+      }
+    },
+    "contingencies": {
+      "type": "object",
+      "properties": {
+        "inspection": {
+          "type": "object",
+          "properties": {
+            "included": { "type": "boolean" },
+            "days": { "type": "integer" }
+          }
+        },
+        "appraisal": {
+          "type": "object",
+          "properties": {
+            "included": { "type": "boolean" }
+          }
+        },
+        "financing": {
+          "type": "object",
+          "properties": {
+            "included": { "type": "boolean" },
+            "days": { "type": "integer" }
+          }
+        },
+        "sale_of_home": {
+          "type": "object",
+          "properties": {
+            "included": { "type": "boolean" },
+            "property_address": { "type": "string" },
+            "days": { "type": "integer" }
+          }
+        },
+        "title": {
+          "type": "object",
+          "properties": {
+            "included": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "closing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Proposed closing date"
+    },
+    "possession_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Proposed possession date"
+    },
+    "inclusions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Items included in the sale"
+    },
+    "exclusions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Items excluded from the sale"
+    },
+    "additional_terms": {
+      "type": "string",
+      "description": "Additional terms and conditions"
+    },
+    "expiration": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Offer expiration date/time"
+    },
+    "counter_offer": {
+      "type": "object",
+      "description": "Counter offer details (if status is countered)",
+      "properties": {
+        "counter_price": { "type": "number" },
+        "counter_terms": { "type": "string" },
+        "counter_expiration": { "type": "string", "format": "date-time" }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["pre_approval_letter", "proof_of_funds", "offer_letter", "contract", "addendum", "other"]
+          },
+          "filename": { "type": "string" },
+          "uploaded_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "properties": {
+        "created_at": { "type": "string", "format": "date-time" },
+        "submitted_at": { "type": "string", "format": "date-time" },
+        "responded_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

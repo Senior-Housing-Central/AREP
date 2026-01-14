@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arep.dev/schemas/agent-card.json",
+  "title": "AREP A2A Agent Card",
+  "description": "Schema for A2A Agent Card used in agent-to-agent communication",
+  "type": "object",
+  "required": ["name", "description", "url", "version", "skills"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agent display name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Agent description"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "A2A endpoint URL"
+    },
+    "version": {
+      "type": "string",
+      "description": "Agent version"
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "streaming": {
+          "type": "boolean",
+          "description": "Supports streaming responses"
+        },
+        "pushNotifications": {
+          "type": "boolean",
+          "description": "Supports push notifications"
+        }
+      }
+    },
+    "defaultInputModes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Supported input modes"
+    },
+    "defaultOutputModes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Supported output modes"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Skill identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Skill display name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Skill description"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Skill tags for discovery"
+          },
+          "examples": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Example prompts for this skill"
+          }
+        }
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "properties": {
+        "schemes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["oauth2", "apiKey", "bearer", "basic"]
+          }
+        }
+      }
+    }
+  }
+}
