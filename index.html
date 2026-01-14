@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AREP - AI Real Estate Protocol</title>
+  <meta name="description" content="An open standard enabling AI agents to discover properties, get valuations, and complete real estate transactions.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a24;
+      --accent-primary: #6366f1;
+      --accent-secondary: #818cf8;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #2a2a3a;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background */
+    .hero-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(129, 140, 248, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+      animation: gradientShift 20s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Grid pattern overlay */
+    .grid-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background-image: 
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 20px 0;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent-secondary);
+    }
+
+    .nav-cta {
+      background: var(--accent-primary);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .nav-cta:hover {
+      background: var(--accent-secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px var(--accent-glow);
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 100px;
+    }
+
+    .hero-content {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .hero-description {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto 48px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+    }
+
+    /* Features Section */
+    .section {
+      padding: 120px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 64px;
+    }
+
+    .section-tag {
+      color: var(--accent-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-description {
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent-primary);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* Capabilities */
+    .capabilities {
+      background: var(--bg-secondary);
+    }
+
+    .capability-table {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .capability-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 2fr;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      align-items: center;
+    }
+
+    .capability-row:last-child {
+      border-bottom: none;
+    }
+
+    .capability-row.header {
+      background: var(--bg-secondary);
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .capability-name {
+      font-weight: 600;
+    }
+
+    .check {
+      color: var(--success);
+      font-size: 1.25rem;
+      text-align: center;
+    }
+
+    /* Code Block */
+    .code-section {
+      background: var(--bg-primary);
+    }
+
+    .code-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      background: var(--bg-secondary);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .code-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .code-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .code-dot.red { background: #ef4444; }
+    .code-dot.yellow { background: #f59e0b; }
+    .code-dot.green { background: #10b981; }
+
+    .code-title {
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+    }
+
+    pre {
+      padding: 24px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      line-height: 1.7;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .code-keyword { color: #c792ea; }
+    .code-string { color: #c3e88d; }
+    .code-number { color: #f78c6c; }
+    .code-property { color: #82aaff; }
+
+    /* Sponsor Section */
+    .sponsor {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sponsor-content {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .sponsor-label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+    }
+
+    .sponsor-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .sponsor-logo svg {
+      width: 60px;
+      height: 40px;
+    }
+
+    .sponsor-logo span {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .sponsor-description {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .sponsor-link {
+      color: var(--accent-secondary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .sponsor-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    footer {
+      padding: 64px 0 32px;
+      background: var(--bg-primary);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand p {
+      color: var(--text-secondary);
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+
+    .footer-column h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column li {
+      margin-bottom: 12px;
+    }
+
+    .footer-column a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .footer-column a:hover {
+      color: var(--accent-secondary);
+    }
+
+    .footer-bottom {
+      padding-top: 32px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-bottom p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .capability-row {
+        grid-template-columns: 1fr 60px 60px;
+      }
+
+      .capability-row > :last-child {
+        display: none;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero-bg"></div>
+  <div class="grid-pattern"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">
+        <div class="logo-icon">🏠</div>
+        AREP
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#capabilities">Capabilities</a></li>
+        <li><a href="#api">API</a></li>
+        <li><a href="https://github.com/Senior-Housing-Central/AREP/blob/main/docs/AREP_Specification.md">Specification</a></li>
+      </ul>
+      <a href="https://github.com/Senior-Housing-Central/AREP" class="nav-cta">
+        View on GitHub →
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          Open Standard • Version 1.0.0-draft
+        </div>
+        <h1>
+          The Universal Protocol for<br>
+          <span>AI-Powered Real Estate</span>
+        </h1>
+        <p class="hero-description">
+          AREP enables AI agents to discover properties, get valuations, submit applications, 
+          and complete real estate transactions across any platform. One protocol for rentals and sales.
+        </p>
+        <div class="hero-buttons">
+          <a href="https://github.com/Senior-Housing-Central/AREP" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            Get Started
+          </a>
+          <a href="docs/AREP_Specification.md" class="btn btn-secondary">
+            📖 Read the Spec
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-tag">Why AREP?</p>
+        <h2>One Protocol, Infinite Possibilities</h2>
+        <p class="section-description">
+          Real estate is fragmented across thousands of proprietary APIs. 
+          AREP creates a universal standard for AI agents to interact with any provider.
+        </p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔌</div>
+          <h3>Transport Agnostic</h3>
+          <p>Works over REST, MCP (Model Context Protocol), A2A (Agent-to-Agent), and GraphQL. Use what fits your stack.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏠</div>
+          <h3>Unified Model</h3>
+          <p>Single protocol for both rentals and sales. Search, apply, offer, and transact with one consistent interface.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧩</div>
+          <h3>Incrementally Adoptable</h3>
+          <p>Providers implement only the capabilities they need. Start with Discovery, add Pricing and Offers later.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔧</div>
+          <h3>Extension-Friendly</h3>
+          <p>Vertical-specific needs via extension namespaces. Senior housing, commercial, mortgage integrations built-in.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Standards-Aligned</h3>
+          <p>Built on RESO Data Dictionary 2.0. Seamless integration with existing MLS and real estate data systems.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI-Native</h3>
+          <p>Designed for AI agents from day one. MCP tool definitions and A2A Agent Cards included in the spec.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Capabilities Section -->
+  <section id="capabilities" class="section capabilities">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-tag">Core Capabilities</p>
+        <h2>Everything Your AI Needs</h2>
+        <p class="section-description">
+          Four core capabilities cover the entire real estate journey from search to transaction.
+        </p>
+      </div>
+      <div class="capability-table">
+        <div class="capability-row header">
+          <span>Capability</span>
+          <span>Rentals</span>
+          <span>Sales</span>
+          <span>Description</span>
+        </div>
+        <div class="capability-row">
+          <span class="capability-name">🔍 Discovery</span>
+          <span class="check">✓</span>
+          <span class="check">✓</span>
+          <span>Property search, details, similar listings, history</span>
+        </div>
+        <div class="capability-row">
+          <span class="capability-name">💰 Pricing</span>
+          <span class="check">✓</span>
+          <span class="check">✓</span>
+          <span>Rent estimates, valuations, comps, market trends</span>
+        </div>
+        <div class="capability-row">
+          <span class="capability-name">📝 Offer</span>
+          <span class="check">✓</span>
+          <span class="check">✓</span>
+          <span>Rental applications, purchase offers, status tracking</span>
+        </div>
+        <div class="capability-row">
+          <span class="capability-name">🔐 Transaction</span>
+          <span class="check">✓</span>
+          <span class="check">✓</span>
+          <span>Lease signing, contracts, closing, documents</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code Section -->
+  <section id="api" class="section code-section">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-tag">Developer Experience</p>
+        <h2>Simple, Powerful API</h2>
+        <p class="section-description">
+          Clean JSON interfaces for REST, MCP, and A2A. Get started in minutes.
+        </p>
+      </div>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots">
+            <span class="code-dot red"></span>
+            <span class="code-dot yellow"></span>
+            <span class="code-dot green"></span>
+          </div>
+          <span class="code-title">MCP Tool Call Example</span>
+        </div>
+        <pre><code>{
+  <span class="code-property">"jsonrpc"</span>: <span class="code-string">"2.0"</span>,
+  <span class="code-property">"method"</span>: <span class="code-string">"tools/call"</span>,
+  <span class="code-property">"params"</span>: {
+    <span class="code-property">"name"</span>: <span class="code-string">"search_properties"</span>,
+    <span class="code-property">"arguments"</span>: {
+      <span class="code-property">"transaction_type"</span>: <span class="code-string">"for_rent"</span>,
+      <span class="code-property">"location"</span>: { <span class="code-property">"city"</span>: <span class="code-string">"Houston"</span>, <span class="code-property">"state"</span>: <span class="code-string">"TX"</span> },
+      <span class="code-property">"price_max"</span>: <span class="code-number">2000</span>,
+      <span class="code-property">"bedrooms_min"</span>: <span class="code-number">2</span>
+    }
+  },
+  <span class="code-property">"id"</span>: <span class="code-number">1</span>
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sponsor Section -->
+  <section class="section sponsor">
+    <div class="container">
+      <div class="sponsor-content">
+        <p class="sponsor-label">Sponsored by</p>
+        <div class="sponsor-logo">
+          <svg width="51" height="34" viewBox="0 0 51 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50.3084 12.5672C50.3084 12.5672 50.2294 12.5082 50.1898 12.4689L34.5401 0.929807C33.8287 0.399049 32.8803 0.399049 32.1492 0.929807L25.6482 5.56903L19.3843 0.929807C18.673 0.399049 17.7245 0.399049 16.9934 0.929807L0.849671 12.4689C0.316157 12.8424 0 13.4518 0 14.1005V31.7924C0 32.8933 0.90895 33.7975 2.0155 33.7975H10.3936C11.5002 33.7975 12.4091 32.8933 12.4091 31.7924C12.4091 30.6916 11.5002 29.7873 10.3936 29.7873H4.031V15.1227L18.179 5.03827L22.21 8.00659L15.9659 12.4492C15.4324 12.8227 15.1162 13.4321 15.1162 14.0808V31.7728C15.1162 32.8736 16.0252 33.7779 17.1317 33.7779H33.8485C34.9551 33.7779 35.864 32.8736 35.864 31.7728V14.1005C35.864 13.4714 35.5676 12.8817 35.0539 12.4885L29.0469 8.06556L33.2952 5.03827L46.969 15.103V29.7677H40.6063C39.4998 29.7677 38.5909 30.6719 38.5909 31.7728C38.5909 32.8736 39.4998 33.7779 40.6063 33.7779H48.9845C50.091 33.7779 51 32.8736 51 31.7728V14.1005C51 13.5107 50.7431 12.9603 50.3084 12.5868V12.5672ZM31.833 15.103V29.7677H19.167V15.1227L25.6087 10.5228L31.833 15.103Z" fill="#6366f1"/>
+          </svg>
+          <span>Senior Housing Central</span>
+        </div>
+        <p class="sponsor-description">
+          Pioneering AI-powered solutions for senior housing discovery and applications. 
+          The reference implementation of AREP powers real property searches today.
+        </p>
+        <a href="https://seniorhousingcentral.com" class="sponsor-link">
+          Visit seniorhousingcentral.com →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <div class="logo-icon">🏠</div>
+            AREP
+          </a>
+          <p>
+            The AI Real Estate Protocol — an open standard for the future of property search and transactions.
+          </p>
+        </div>
+        <div class="footer-column">
+          <h4>Documentation</h4>
+          <ul>
+            <li><a href="docs/AREP_Specification.md">Specification</a></li>
+            <li><a href="docs/getting-started.md">Getting Started</a></li>
+            <li><a href="docs/architecture.md">Architecture</a></li>
+            <li><a href="schemas/">JSON Schemas</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="openapi/arep-v1.yaml">OpenAPI Spec</a></li>
+            <li><a href="mcp/">MCP Tools</a></li>
+            <li><a href="https://github.com/Senior-Housing-Central/AREP">GitHub</a></li>
+            <li><a href="CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Reference</h4>
+          <ul>
+            <li><a href="https://api-dev.seniorhousingcentral.com/arep/mcp/health">Live MCP Server</a></li>
+            <li><a href="https://api-dev.seniorhousingcentral.com/.well-known/arep">Discovery Manifest</a></li>
+            <li><a href="https://seniorhousingcentral.com">SHC Platform</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 AREP Protocol. Licensed under Apache 2.0.</p>
+        <p>Made with ❤️ for the AI-first future of real estate.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
